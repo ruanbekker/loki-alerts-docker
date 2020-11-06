@@ -1,0 +1,43 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: '__SLACK_WEBHOOK_URL__'
+
+route:
+  group_by: ['alertname', 'severity', 'instance']
+  group_wait: 45s
+  group_interval: 10m
+  repeat_interval: 1h
+  receiver: 'default-catchall-slack'
+  routes:
+  - match:
+      severity: warning
+    receiver: warning-devops-slack
+    routes:
+    - match_re:
+        team: .*(devops).*
+      receiver: warning-devops-slack
+
+receivers:
+- name: 'default-catchall-slack'
+  slack_configs:
+    - send_resolved: true
+      channel: "__SLACK_CHANNEL__"
+      title: '{{ if eq .Status "firing" }}:flushed:{{ else }}:sunglasses:{{ end }} [{{ .Status | toUpper }}] {{ .CommonAnnotations.summary }} (catchall)'
+      text: "{{ range .Alerts }}*Priority*: `{{ .Labels.severity | toUpper }}`\nInstance: {{ .Labels.instance }}\n{{ .Annotations.description }}\n{{ end }}"
+
+- name: 'warning-devops-slack'
+  slack_configs:
+    - send_resolved: true
+      channel: '__SLACK_CHANNEL__'
+      title: '{{ if eq .Status "firing" }}:fire:{{ else }}:white_check_mark:{{ end }} [{{ .Status | toUpper }}] {{ .CommonAnnotations.title }} '
+      text: >-
+        {{ range .Alerts }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* `{{ .Labels.severity }}`
+          *Graph:* {{ if eq .Labels.category "logs" }}<{{ .Annotations.logurl }}|:chart_with_upwards_trend:>{{ else }}<{{ .GeneratorURL }}|:chart_with_upwards_trend:>{{ end }} *Dashboard:* <{{ .Annotations.dashboard }}|:bar_chart:> *Runbook:* <{{ .Annotations.runbook }}|:spiral_note_pad:>
+          *Details:*
+          {{ range .Labels.SortedPairs }} - *{{ .Name }}:* `{{ .Value }}`
+          {{ end }}
+           - *Impact*: {{ .Annotations.impact }}
+           - *Receiver*: warning-{{ .Labels.team }}-slack
+        {{ end }}

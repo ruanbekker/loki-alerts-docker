@@ -1,0 +1,81 @@
+version: "3.4"
+
+services:
+  alertmanager:
+    image: prom/alertmanager
+    container_name: alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./config/alertmanager.yml:/etc/alertmanager/config.yml
+    ports:
+      - 9093:9093
+    networks:
+      - public
+
+  loki:
+   image: grafana/loki:2.0.0-amd64
+   container_name: loki
+   volumes:
+     - ./config/loki.yml:/etc/config/loki.yml
+     - ./rules/demo/rules.yml:/etc/loki/rules/demo/rules.yml
+   entrypoint:
+     - /usr/bin/loki
+     - -config.file=/etc/config/loki.yml
+   ports:
+     - "3100:3100"
+   depends_on:
+     - alertmanager
+   networks:
+      - public
+
+  grafana:
+    image: grafana/grafana:7.2.2
+    container_name: grafana
+    volumes:
+      - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    networks:
+      - public
+
+  webservice:
+    image: nginx
+    container_name: webservice
+    ports:
+      - 8000:80
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=development
+    depends_on:
+      - loki
+    networks:
+      - public
+
+  http-client:
+    image: alpine
+    container_name: http-client
+    entrypoint: |
+      sh -c 'sh -s << EOF
+      apk --no-cache add curl
+      while true
+        do
+          curl http://webservice
+        done
+      EOF'
+    depends_on:
+      - webservice
+    networks:
+      - public
+
+networks:
+  public: {}
+
+volumes:
+  grafana: {}

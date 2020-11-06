@@ -1,0 +1,21 @@
+groups:
+  - name: rate-alerting
+    rules:
+      - alert: HighLogRate
+        expr: |
+          sum by (job, compose_service)
+            (rate({job="dockerlogs"}[1m]))
+            > 60
+        for: 1m
+        labels:
+            severity: warning
+            team: devops
+            category: logs
+        annotations:
+            title: "High LogRate Alert"
+            description: "something is logging a lot"
+            impact: "impact"
+            action: "action"
+            dashboard: "https://grafana.com/service-dashboard"
+            runbook: "https://wiki.com"
+            logurl: "https://grafana.com/log-explorer"
