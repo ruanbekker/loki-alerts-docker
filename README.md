@@ -3,6 +3,11 @@ Alerting with Loki v2 on Docker Example
 
 ## Usage
 
+Dependency is to install the loki docker driver:
+
+```
+$ docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+```
 
 Replace your config:
 
