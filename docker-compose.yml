@@ -19,7 +19,7 @@ services:
    container_name: loki
    volumes:
      - ./config/loki.yml:/etc/config/loki.yml
-     - ./rules/demo/rules.yml:/etc/loki/rules/demo/rules.yml
+     - ./rules/demo/rules.yml:/etc/loki/rules/fake/rules.yml
    entrypoint:
      - /usr/bin/loki
      - -config.file=/etc/config/loki.yml
