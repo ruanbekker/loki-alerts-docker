@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'severity', 'instance']
+  group_wait: 45s
+  group_interval: 10m
+  repeat_interval: 1h
+  receiver: 'default-catchall'
+  routes:
+  - match:
+      severity: warning
+    receiver: warning-devops
+    routes:
+    - match_re:
+        team: .*(devops).*
+      receiver: warning-devops
+
+receivers:
+- name: 'default-catchall'
+  webhook_configs:
+    - url: http://alertmanager-to-gotify:8435/
+
+- name: 'warning-devops'
+  webhook_configs:
+    - url: http://alertmanager-to-gotify:8435/
