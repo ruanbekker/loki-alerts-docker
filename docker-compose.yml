@@ -15,7 +15,7 @@ services:
       - public
 
   loki:
-   image: grafana/loki:2.0.0-amd64
+   image: grafana/loki:2.7.4
    container_name: loki
    volumes:
      - ./config/loki.yml:/etc/config/loki.yml
@@ -31,7 +31,7 @@ services:
       - public
 
   grafana:
-    image: grafana/grafana:7.2.2
+    image: grafana/grafana:9.4.3
     container_name: grafana
     volumes:
       - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
